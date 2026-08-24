@@ -1,0 +1,26 @@
+﻿import axios from 'axios';
+
+// Toma la URL de producción configurada en Vercel/env o usa localhost por defecto en desarrollo
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+const client = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+client.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers['x-access-token'] = token;
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export default client;
