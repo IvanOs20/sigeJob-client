@@ -61,7 +61,9 @@ function App() {
         
         {/* Rutas de activación compatibles */}
         <Route path="/activate-account/:token" element={<ActivateAccount />} />
+        <Route path="/activate-account" element={<ActivateAccount />} />
         <Route path="/activar-cuenta/:token" element={<ActivateAccount />} />
+        <Route path="/activar-cuenta" element={<ActivateAccount />} />
 
         <Route element={<ProtectedRoute allowedRoles={['tutor']} />}>
           <Route path="/tutor" element={<Dashboard />} />
