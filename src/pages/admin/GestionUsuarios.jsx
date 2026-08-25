@@ -266,6 +266,7 @@ const GestionUsuarios = () => {
 
       {isRegistering ? (
         <RegistrarUsuario
+          rolInicial={activeTab === 'tutores' ? 'tutor' : 'docente'}
           onBack={() => {
             setIsRegistering(false);
             setEditingUser(null);
