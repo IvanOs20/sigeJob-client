@@ -58,7 +58,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        
+        {/* Rutas de activación compatibles */}
         <Route path="/activate-account/:token" element={<ActivateAccount />} />
+        <Route path="/activar-cuenta/:token" element={<ActivateAccount />} />
+
         <Route element={<ProtectedRoute allowedRoles={['tutor']} />}>
           <Route path="/tutor" element={<Dashboard />} />
         </Route>
