@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Gradiente azul del sistema -->
+    <linearGradient id="systemBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo negro profundo con esquinas redondeadas -->
+  <rect width="512" height="512" rx="128" fill="#0a0e17" />
+  
+  <!-- Borde perimetral sutil -->
+  <rect width="500" height="500" x="6" y="6" rx="122" fill="none" stroke="#1e293b" stroke-width="12" />
+
+  <!-- Monograma SJ -->
+  <text 
+    x="50%" 
+    y="55%" 
+    text-anchor="middle" 
+    dominant-baseline="middle" 
+    fill="url(#systemBlue)" 
+    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" 
+    font-size="240" 
+    font-weight="900" 
+    letter-spacing="-8">
+    SJ
+  </text>
+</svg>
