@@ -4,41 +4,11 @@ import { GraduationCap, LogOut, Star, Bell, BookOpen, User, Phone, Loader2 } fro
 import client from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 
-const obtenerIdTutorSesion = () => {
-  try {
-    const token = localStorage.getItem('token')
-    if (token) {
-      const base64Url = token.split('.')[1]
-      const base64 = base64Url.replaceAll('-', '+').replaceAll('_', '/')
-      const payload = JSON.parse(window.atob(base64))
-      const id = payload.id_perfil ?? payload.id_tutor ?? payload.id_usuario ?? payload.idPerfil
-
-      if (id) return Number(id)
-    }
-  } catch (error) {
-    console.warn('Error al leer token para ID de tutor:', error)
-  }
-
-  try {
-    const rawUser = localStorage.getItem('user')
-    if (rawUser) {
-      const storedUser = JSON.parse(rawUser)
-      const id = storedUser.id_perfil ?? storedUser.id_tutor ?? storedUser.id_usuario ?? storedUser.id
-
-      if (id) return Number(id)
-    }
-  } catch (error) {
-    console.warn('Error al parsear user de localStorage:', error)
-  }
-
-  return null
-}
-
 const Dashboard = () => {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
 
-  const [tutor, setTutor] = useState(() => user?.data || user || null)
+  const [tutor, setTutor] = useState(() => user || null)
   const [selectedAlumno, setSelectedAlumno] = useState(null)
   const [grades, setGrades] = useState([])
   const [notifications, setNotifications] = useState([])
@@ -60,8 +30,8 @@ const Dashboard = () => {
       try {
         const alumnosResponse = await client.get('/alumnos')
         const alumnos = Array.isArray(alumnosResponse.data) ? alumnosResponse.data : []
-        let tutorData = user?.data || {}
-        const idTutor = obtenerIdTutorSesion()
+        let tutorData = user || {}
+        const idTutor = user?.id_perfil || user?.id_usuario
 
         if (idTutor) {
           try {
@@ -84,7 +54,7 @@ const Dashboard = () => {
         }
       } catch (error) {
         console.error('Error cargando expediente del tutor:', error)
-        setTutor({ ...(user?.data || {}), tb_alumnos: [] })
+        setTutor({ ...(user || {}), tb_alumnos: [] })
         setSelectedAlumno(null)
       } finally {
         setLoadingTutor(false)
@@ -92,7 +62,7 @@ const Dashboard = () => {
     }
 
     fetchTutorAndChildren()
-  }, [user?.data])
+  }, [user])
 
   useEffect(() => {
     const studentId = selectedAlumno?.id_alumno || selectedAlumno?.id || null

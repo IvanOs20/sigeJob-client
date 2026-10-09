@@ -1,39 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Mail, CheckCircle2, Loader2 } from 'lucide-react';
 import client from '../../api/axios.js';
-
-const obtenerIdDocenteSesion = () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(window.atob(base64));
-      const id = payload.id_perfil ?? payload.id_docente ?? payload.id_usuario ?? payload.idPerfil ?? payload.idDocente;
-
-      if (id) return Number(id);
-    }
-  } catch (err) {
-    console.warn('Error al decodificar token para ID del docente:', err);
-  }
-
-  try {
-    const rawUser = localStorage.getItem('user') || localStorage.getItem('usuario');
-    if (rawUser) {
-      const storedUser = JSON.parse(rawUser);
-      const user = storedUser.data || storedUser;
-      const id = user.id_perfil ?? user.id_docente ?? user.id_usuario ?? user.id;
-
-      if (id) return Number(id);
-    }
-  } catch (err) {
-    console.warn('Error al parsear usuario de localStorage:', err);
-  }
-
-  return null;
-};
+import { useAuth } from '../../context/AuthContext';
 
 const PerfilDocente = () => {
+  const { user } = useAuth();
   const [docente, setDocente] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +13,7 @@ const PerfilDocente = () => {
 
     const cargarPerfilDocente = async () => {
       if (mounted) setLoading(true);
-      const idDocente = obtenerIdDocenteSesion();
+      const idDocente = user?.id_perfil || user?.id_usuario;
 
       if (!idDocente) {
         console.error('No se encontró ID de docente en la sesión activa.');
@@ -57,15 +28,7 @@ const PerfilDocente = () => {
         if (mounted) setDocente(datos || null);
       } catch (error) {
         console.error('Error al cargar el perfil del docente:', error);
-        try {
-          const rawUser = localStorage.getItem('user');
-          if (mounted && rawUser) {
-            const storedUser = JSON.parse(rawUser);
-            setDocente(storedUser.data || storedUser);
-          }
-        } catch (fallbackError) {
-          console.warn('Error al recuperar el perfil local del docente:', fallbackError);
-        }
+        if (mounted) setDocente(user || null);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -76,7 +39,7 @@ const PerfilDocente = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [user]);
 
   const getInitials = (nombre = '', apellidos = '') => {
     const n = nombre || '';

@@ -2,43 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Send, Bell, Search, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import client from '../../api/axios.js'
+import { useAuth } from '../../context/AuthContext'
 
 const bgColors = ['bg-amber-100 text-amber-700', 'bg-emerald-100 text-emerald-700', 'bg-sky-100 text-sky-700', 'bg-pink-100 text-pink-700']
-
-const obtenerIdDocente = () => {
-  try {
-    const token = localStorage.getItem('token')
-    if (token) {
-      const base64Url = token.split('.')[1]
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-      const payload = JSON.parse(window.atob(base64))
-      console.log('>> [DEBUG TOKEN PAYLOAD]:', payload)
-
-      const id = payload.id_perfil ?? payload.id_docente ?? payload.id_usuario ?? payload.idPerfil ?? payload.idDocente
-      if (id) return Number(id)
-    }
-  } catch (error) {
-    console.warn('No se pudo decodificar el token:', error)
-  }
-
-  try {
-    const rawUser = localStorage.getItem('user') || localStorage.getItem('usuario') || localStorage.getItem('auth')
-    if (rawUser) {
-      const parsed = JSON.parse(rawUser)
-      const userData = parsed?.data || parsed?.user || parsed
-      const id = userData?.id_docente ?? userData?.id_perfil ?? userData?.id_usuario ?? userData?.id
-      if (id) return Number(id)
-    }
-  } catch (error) {
-    console.warn('No se pudo parsear el usuario de localStorage:', error)
-  }
-
-  return null
-}
 
 const EnviarNotificacion = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [alumnos, setAlumnos] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -109,7 +80,7 @@ const EnviarNotificacion = () => {
     setErrorMessage('')
     setSuccessMessage('')
 
-    const idDocenteNum = obtenerIdDocente()
+    const idDocenteNum = Number(user?.id_perfil || user?.id_usuario)
     const idAlumno = selectedAlumno?.id_alumno || selectedAlumno?.id
     const idAlumnoNum = Number(idAlumno)
 

@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -19,32 +21,24 @@ import AltasMaterias from './pages/admin/AltasMaterias';
 import MiCuenta from './pages/admin/MiCuenta';
 
 export const ProtectedRoute = ({ allowedRoles }) => {
-  const token = localStorage.getItem('token');
-  const rawUser = localStorage.getItem('user');
-  let user = null;
+  const { user, loading } = useAuth();
 
-  try {
-    user = rawUser ? JSON.parse(rawUser) : null;
-  } catch (error) {
-    console.warn('No se pudo leer el usuario de la sesión:', error);
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
   }
 
-  if (!token || !user) {
+  if (!user) {
     return <Navigate replace to="/login" />;
   }
 
-  const sessionUser = user.data || user;
-  const userRole = (
-    sessionUser.rol ||
-    sessionUser.role ||
-    user.rol ||
-    user.role ||
-    localStorage.getItem('rol') ||
-    ''
-  ).toLowerCase();
-  const normalizedAllowedRoles = allowedRoles.map((role) => role.toLowerCase());
+  const userRole = user.rol?.toLowerCase() || '';
+  const normalizedAllowedRoles = allowedRoles?.map((role) => role.toLowerCase());
 
-  if (!normalizedAllowedRoles.includes(userRole)) {
+  if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(userRole)) {
     return <Navigate replace to="/login" />;
   }
 

@@ -40,13 +40,10 @@ const AdminLayout = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const currentSection = sectionTitles[location.pathname] || 'Panel de Control';
-  const adminInitial = user?.data?.nombre?.charAt(0)?.toUpperCase() || 'A';
+  const adminInitial = user?.nombre?.charAt(0)?.toUpperCase() || 'A';
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.clear();
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login', { replace: true });
   };
 
