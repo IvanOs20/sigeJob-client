@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
     const restoreSession = async () => {
       try {
-        const response = await api.post('/auth/refresh', null, {
+        const response = await api.post('/auth/refresh', undefined, {
           withCredentials: true,
         });
         const token = response.data?.accessToken;
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout', null, {
+      await api.post('/auth/logout', undefined, {
         withCredentials: true,
       });
     } finally {

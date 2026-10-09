@@ -6,9 +6,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://api.sigejod.com/api';
 const client = axios.create({
   baseURL: API_URL,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 let accessToken = null;
@@ -49,7 +46,7 @@ client.interceptors.response.use(
 
     if (!refreshPromise) {
       refreshPromise = client
-        .post('/auth/refresh', null, {
+        .post('/auth/refresh', undefined, {
           withCredentials: true,
         })
         .then((response) => {
