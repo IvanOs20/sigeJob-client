@@ -1,7 +1,7 @@
 ﻿import axios from 'axios';
 
 // Toma la URL de producción configurada en Vercel/env o usa localhost por defecto en desarrollo
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.sigejod.com/api';
 
 const client = axios.create({
   baseURL: API_URL,
