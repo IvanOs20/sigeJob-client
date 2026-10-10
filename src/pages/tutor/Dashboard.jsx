@@ -17,6 +17,8 @@ const Dashboard = () => {
   const [loadingTutor, setLoadingTutor] = useState(true)
   const [loadingGrades, setLoadingGrades] = useState(false)
   const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const [gradesError, setGradesError] = useState('')
+  const [notificationsError, setNotificationsError] = useState('')
 
   const average = useMemo(() => {
     if (!grades?.length) return '0.00'
@@ -68,17 +70,25 @@ const Dashboard = () => {
     const studentId = selectedAlumno?.id_alumno || selectedAlumno?.id || null
     if (!studentId) {
       setGrades([])
+      setGradesError('')
       return
     }
 
     const fetchGrades = async () => {
       setLoadingGrades(true)
+      setGradesError('')
       try {
         const response = await client.get(`/alumnomateria/alumno/${studentId}`)
         setGrades(response.data || [])
       } catch (error) {
         console.error('Error al obtener calificaciones:', error)
         setGrades([])
+        setGradesError(
+          error.response?.data?.message ||
+            (error.response?.status === 403
+              ? 'No tienes autorización para consultar la información académica de este estudiante.'
+              : 'No se pudieron cargar las calificaciones.')
+        )
       } finally {
         setLoadingGrades(false)
       }
@@ -92,11 +102,13 @@ const Dashboard = () => {
     const studentId = selectedAlumno?.id_alumno || selectedAlumno?.id || null
     if (!studentId) {
       setNotifications([])
+      setNotificationsError('')
       return
     }
 
     const fetchNotifications = async () => {
       setLoadingNotifications(true)
+      setNotificationsError('')
       try {
         const response = await client.get(`/notificaciones/alumno/${studentId}`)
         const sorted = (response.data || []).slice().sort((a, b) => {
@@ -106,6 +118,12 @@ const Dashboard = () => {
       } catch (error) {
         console.error('Error al obtener notificaciones:', error)
         setNotifications([])
+        setNotificationsError(
+          error.response?.data?.message ||
+            (error.response?.status === 403
+              ? 'No tienes autorización para consultar los avisos de este estudiante.'
+              : 'No se pudieron cargar los avisos.')
+        )
       } finally {
         setLoadingNotifications(false)
       }
@@ -286,7 +304,12 @@ const Dashboard = () => {
                   </div>
                 )
               })}
-              {grades?.length === 0 && !loadingGrades && (
+              {gradesError && !loadingGrades && (
+                <div className="rounded-2xl bg-white p-5 text-rose-600 shadow-sm">
+                  <span>{gradesError}</span>
+                </div>
+              )}
+              {!gradesError && grades?.length === 0 && !loadingGrades && (
                 <div className="rounded-2xl bg-white p-5 text-slate-500 shadow-sm">
                   <span>No hay calificaciones disponibles.</span>
                 </div>
@@ -332,7 +355,12 @@ const Dashboard = () => {
                   </div>
                 ))}
 
-                {!notifications?.length && !loadingNotifications && (
+                {notificationsError && !loadingNotifications && (
+                  <div className="rounded-3xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                    <span>{notificationsError}</span>
+                  </div>
+                )}
+                {!notificationsError && !notifications?.length && !loadingNotifications && (
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
                     <span>No hay avisos recientes.</span>
                   </div>

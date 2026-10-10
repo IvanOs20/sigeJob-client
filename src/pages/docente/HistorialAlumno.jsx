@@ -13,6 +13,7 @@ const HistorialAlumno = () => {
 
   const [boleta, setBoleta] = useState([]) // array of { id_materia, calificacion }
   const [loadingBoleta, setLoadingBoleta] = useState(false)
+  const [errorBoleta, setErrorBoleta] = useState('')
 
   useEffect(() => {
     const cargarAlumnosDocente = async () => {
@@ -82,26 +83,35 @@ const HistorialAlumno = () => {
   useEffect(() => {
     if (!selectedAlumno) {
       setBoleta([])
+      setErrorBoleta('')
       return
     }
 
     const idAlumno = selectedAlumno.id_alumno || selectedAlumno.id
     if (!idAlumno) {
       setBoleta([])
+      setErrorBoleta('')
       return
     }
 
     const cargarHistorialAlumno = async () => {
-    setLoadingBoleta(true)
-    try {
-      const res = await client.get(`/alumnomateria/alumno/${idAlumno}`)
-      setBoleta(Array.isArray(res.data) ? res.data : [])
-    } catch (error) {
-      console.warn('Error al cargar historial del alumno:', error)
-      setBoleta([])
-    } finally {
-      setLoadingBoleta(false)
-    }
+      setLoadingBoleta(true)
+      setErrorBoleta('')
+      try {
+        const res = await client.get(`/alumnomateria/alumno/${idAlumno}`)
+        setBoleta(Array.isArray(res.data) ? res.data : [])
+      } catch (error) {
+        console.warn('Error al cargar historial del alumno:', error)
+        setBoleta([])
+        setErrorBoleta(
+          error.response?.data?.message ||
+            (error.response?.status === 403
+              ? 'No tienes autorización para consultar el historial de este alumno.'
+              : 'No se pudo cargar el historial del alumno.')
+        )
+      } finally {
+        setLoadingBoleta(false)
+      }
     }
 
     cargarHistorialAlumno()
@@ -190,6 +200,8 @@ const HistorialAlumno = () => {
           <div>
             {loadingBoleta ? (
               <div className="p-6 text-center text-slate-500"><Loader2 className="inline h-5 w-5 animate-spin mr-2" /><span>Cargando boleta...</span></div>
+            ) : errorBoleta ? (
+              <div className="p-6 text-center text-rose-600"><span>{errorBoleta}</span></div>
             ) : (
               <div className="divide-y">
                 {materiasConNotas.map((m, idx) => {

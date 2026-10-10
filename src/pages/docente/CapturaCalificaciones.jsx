@@ -72,7 +72,12 @@ const CapturaCalificaciones = () => {
       setOriginalGrades({})
       setGrades({})
 
-      if (error.response?.status === 404) {
+      if (error.response?.status === 403) {
+        setMensajeInfo(
+          error.response?.data?.message ||
+          'No tienes autorización para consultar los alumnos de esta materia.'
+        )
+      } else if (error.response?.status === 404) {
         const msg = error.response?.data?.message || 'No tienes un grupo asignado o no se encontraron alumnos para esta materia.'
         setMensajeInfo(msg)
       } else {
@@ -174,7 +179,13 @@ const CapturaCalificaciones = () => {
       setOriginalGrades(newOrig)
     } catch (err) {
       console.error('Error guardando calificaciones', err)
-      setErrorMessage('Error al guardar calificaciones')
+      const status = err.response?.status
+      const msg =
+        err.response?.data?.message ||
+        (status === 403
+          ? 'No tienes autorización para calificar a uno de los alumnos seleccionados.'
+          : 'Error al guardar calificaciones.')
+      setErrorMessage(msg)
     } finally {
       setSaving(false)
       setTimeout(() => {

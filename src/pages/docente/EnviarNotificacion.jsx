@@ -100,12 +100,11 @@ const EnviarNotificacion = () => {
     }
 
     const payload = {
-      id_docente: idDocenteNum,
       id_alumno: idAlumnoNum,
       mensaje: mensaje.trim(),
     }
 
-    console.log('>> [DEBUG] Enviando payload con id_docente:', payload)
+    console.log('>> [DEBUG] Enviando payload:', payload)
     setSubmitting(true)
     try {
       const response = await client.post('/notificaciones', payload)
@@ -119,10 +118,15 @@ const EnviarNotificacion = () => {
     } catch (err) {
       console.log('>> [DEBUG] Validación del servidor:', err.response?.data)
       console.error('Error enviando notificación:', err)
-      const errorData = err.response?.data
-      const message = typeof errorData === 'string'
-        ? errorData
-        : errorData?.message || errorData?.error || JSON.stringify(errorData) || 'Error 400: Datos inválidos al enviar la notificación.'
+      const status = err.response?.status
+      const serverMessage = err.response?.data?.message
+      const message =
+        serverMessage ||
+        (status === 403
+          ? 'No tienes autorización para enviar notificaciones a este alumno.'
+          : status === 400
+            ? 'Los datos de la notificación no son válidos.'
+            : 'No se pudo enviar la notificación.')
       setErrorMessage(message)
       setTimeout(() => setErrorMessage(''), 4000)
     } finally {

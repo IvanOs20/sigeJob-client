@@ -55,7 +55,13 @@ const NotificacionesEnviadas = () => {
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
       console.error('Error al eliminar notificación:', err)
-      setError('Error al eliminar notificación')
+      const status = err.response?.status
+      const msg =
+        err.response?.data?.message ||
+        (status === 403
+          ? 'No tienes autorización para eliminar esta notificación.'
+          : 'Error al eliminar la notificación.')
+      setError(msg)
       setTimeout(() => setError(''), 4000)
     } finally {
       setDeletingId(null)
