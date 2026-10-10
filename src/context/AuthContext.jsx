@@ -36,6 +36,11 @@ export const AuthProvider = ({ children }) => {
     let mounted = true;
 
     const restoreSession = async () => {
+      if (!localStorage.getItem('hasSession')) {
+        if (mounted) setLoading(false);
+        return;
+      }
+
       try {
         const response = await api.post('/auth/refresh', undefined, {
           withCredentials: true,
@@ -50,6 +55,7 @@ export const AuthProvider = ({ children }) => {
         if (mounted) setUser(getUserFromResponse(response.data, token));
       } catch {
         setAccessToken(null);
+        localStorage.removeItem('hasSession');
         if (mounted) setUser(null);
       } finally {
         if (mounted) setLoading(false);
@@ -67,11 +73,13 @@ export const AuthProvider = ({ children }) => {
     const token = data.accessToken;
     setAccessToken(token);
     setUser(getUserFromResponse(data, token));
+    localStorage.setItem('hasSession', 'true');
   };
 
   const logout = async () => {
     setAccessToken(null);
     setUser(null);
+    localStorage.removeItem('hasSession');
 
     try {
       await api.post('/auth/logout', undefined, {
