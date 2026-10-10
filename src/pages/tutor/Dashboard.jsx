@@ -27,21 +27,24 @@ const Dashboard = () => {
   }, [grades])
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const fetchTutorAndChildren = async () => {
+      if (!user) return
       setLoadingTutor(true)
       try {
-        const alumnosResponse = await client.get('/alumnos')
+        const alumnosResponse = await client.get('/alumnos', { signal: controller.signal })
         const alumnos = Array.isArray(alumnosResponse.data) ? alumnosResponse.data : []
         let tutorData = user || {}
         const idTutor = user?.id_perfil || user?.id_usuario
 
         if (idTutor) {
           try {
-            console.log(`>> [DEBUG] Consultando perfil para tutor ID: ${idTutor}`)
-            const response = await client.get(`/tutores/${idTutor}`)
+            const response = await client.get(`/tutores/${idTutor}`, { signal: controller.signal })
             const data = Array.isArray(response.data) ? response.data[0] : response.data
             tutorData = data || tutorData
           } catch (error) {
+            if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return
             console.warn('No se pudo cargar el perfil del tutor:', error)
           }
         } else {
@@ -55,6 +58,7 @@ const Dashboard = () => {
           setSelectedAlumno(null)
         }
       } catch (error) {
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return
         console.error('Error cargando expediente del tutor:', error)
         setTutor({ ...(user || {}), tb_alumnos: [] })
         setSelectedAlumno(null)
@@ -64,23 +68,27 @@ const Dashboard = () => {
     }
 
     fetchTutorAndChildren()
+
+    return () => controller.abort()
   }, [user])
 
   useEffect(() => {
+    const controller = new AbortController()
     const studentId = selectedAlumno?.id_alumno || selectedAlumno?.id || null
     if (!studentId) {
       setGrades([])
       setGradesError('')
-      return
+      return () => controller.abort()
     }
 
     const fetchGrades = async () => {
       setLoadingGrades(true)
       setGradesError('')
       try {
-        const response = await client.get(`/alumnomateria/alumno/${studentId}`)
+        const response = await client.get(`/alumnomateria/alumno/${studentId}`, { signal: controller.signal })
         setGrades(response.data || [])
       } catch (error) {
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return
         console.error('Error al obtener calificaciones:', error)
         setGrades([])
         setGradesError(
@@ -95,27 +103,31 @@ const Dashboard = () => {
     }
 
     fetchGrades()
+
+    return () => controller.abort()
   }, [selectedAlumno])
 
   // Sincronizado por alumno seleccionado
   useEffect(() => {
+    const controller = new AbortController()
     const studentId = selectedAlumno?.id_alumno || selectedAlumno?.id || null
     if (!studentId) {
       setNotifications([])
       setNotificationsError('')
-      return
+      return () => controller.abort()
     }
 
     const fetchNotifications = async () => {
       setLoadingNotifications(true)
       setNotificationsError('')
       try {
-        const response = await client.get(`/notificaciones/alumno/${studentId}`)
+        const response = await client.get(`/notificaciones/alumno/${studentId}`, { signal: controller.signal })
         const sorted = (response.data || []).slice().sort((a, b) => {
           return new Date(b.fecha_envio) - new Date(a.fecha_envio)
         })
         setNotifications(sorted)
       } catch (error) {
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return
         console.error('Error al obtener notificaciones:', error)
         setNotifications([])
         setNotificationsError(
@@ -130,6 +142,8 @@ const Dashboard = () => {
     }
 
     fetchNotifications()
+
+    return () => controller.abort()
   }, [selectedAlumno])
 
   useEffect(() => {

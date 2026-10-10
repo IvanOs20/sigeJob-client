@@ -10,8 +10,10 @@ const PerfilDocente = () => {
 
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
 
     const cargarPerfilDocente = async () => {
+      if (!user) return;
       if (mounted) setLoading(true);
       const idDocente = user?.id_perfil || user?.id_usuario;
 
@@ -22,11 +24,11 @@ const PerfilDocente = () => {
       }
 
       try {
-        console.log(`>> [DEBUG] Consultando perfil para docente ID: ${idDocente}`);
-        const res = await client.get(`/docentes/${idDocente}`);
+        const res = await client.get(`/docentes/${idDocente}`, { signal: controller.signal });
         const datos = Array.isArray(res.data) ? res.data[0] : res.data?.data || res.data;
         if (mounted) setDocente(datos || null);
       } catch (error) {
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
         console.error('Error al cargar el perfil del docente:', error);
         if (mounted) setDocente(user || null);
       } finally {
@@ -38,6 +40,7 @@ const PerfilDocente = () => {
 
     return () => {
       mounted = false;
+      controller.abort();
     };
   }, [user]);
 

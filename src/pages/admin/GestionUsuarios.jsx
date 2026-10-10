@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, Plus, Edit, Trash2, UserCheck, Clock, X } from 'lucide-react';
 import api from '../../api/axios';
 import EditarUsuarioDrawer from '../../components/admin/EditarUsuarioDrawer';
 import RegistrarUsuario from '../../components/admin/RegistrarUsuario';
+import { useAuth } from '../../context/AuthContext';
 
 const normalizeText = (value) => String(value ?? '').trim();
 
@@ -27,12 +28,16 @@ const GestionUsuarios = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const isAuthenticated = Boolean(user);
+  const activeRequestController = useRef(null);
 
   const refreshUsers = async () => {
     try {
+      const signal = activeRequestController.current?.signal;
       const [docentesResponse, tutoresResponse] = await Promise.all([
-        api.get('/docentes'),
-        api.get('/tutores'),
+        api.get('/docentes', { signal }),
+        api.get('/tutores', { signal }),
       ]);
 
       setDocentes(docentesResponse.data || []);
@@ -43,18 +48,23 @@ const GestionUsuarios = () => {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+    activeRequestController.current = controller;
+
     const fetchUsers = async () => {
+      if (!isAuthenticated) return;
       setLoading(true);
 
       try {
         const [docentesResponse, tutoresResponse] = await Promise.all([
-          api.get('/docentes'),
-          api.get('/tutores'),
+          api.get('/docentes', { signal: controller.signal }),
+          api.get('/tutores', { signal: controller.signal }),
         ]);
 
         setDocentes(docentesResponse.data || []);
         setTutores(tutoresResponse.data || []);
       } catch (error) {
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
         console.error('Error al obtener usuarios:', error);
         setDocentes([]);
         setTutores([]);
@@ -64,7 +74,12 @@ const GestionUsuarios = () => {
     };
 
     fetchUsers();
-  }, []);
+    
+    return () => {
+      controller.abort();
+      activeRequestController.current = null;
+    };
+  }, [isAuthenticated]);
 
   const usersForTab = activeTab === 'docentes' ? docentes : tutores;
 

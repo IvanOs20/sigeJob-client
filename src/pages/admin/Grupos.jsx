@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, Plus, Edit3, Trash2, Users, Check, X, Loader2, ChevronDown } from 'lucide-react';
 import api from '../../api/axios.js';
 import EditarGrupoDrawer from '../../components/admin/EditarGrupoDrawer';
+import { useAuth } from '../../context/AuthContext';
 
 const gradosDisponibles = ['1°', '2°', '3°', '4°', '5°', '6°'];
 
@@ -50,21 +51,27 @@ const Grupos = () => {
   const [grupoAEditar, setGrupoAEditar] = useState(null);
 
   const docenteDropdownRef = useRef(null);
+  const { user } = useAuth();
+  const isAuthenticated = Boolean(user);
+  const activeRequestController = useRef(null);
 
-  const fetchData = async () => {
+  const fetchData = async (signal) => {
+    if (!isAuthenticated) return;
+    const requestSignal = signal || activeRequestController.current?.signal;
     setLoading(true);
 
     try {
       const [gruposResponse, docentesResponse, alumnosResponse] = await Promise.all([
-        api.get('/grupos'),
-        api.get('/docentes'),
-        api.get('/alumnos'),
+        api.get('/grupos', { signal: requestSignal }),
+        api.get('/docentes', { signal: requestSignal }),
+        api.get('/alumnos', { signal: requestSignal }),
       ]);
 
       setListaGrupos(gruposResponse.data || []);
       setListaDocentes(docentesResponse.data || []);
       setListaAlumnos(alumnosResponse.data || []);
     } catch (error) {
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
       console.error('Error al cargar grupos/docentes/alumnos:', error);
       setListaGrupos([]);
       setListaDocentes([]);
@@ -75,8 +82,15 @@ const Grupos = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const controller = new AbortController();
+    activeRequestController.current = controller;
+    fetchData(controller.signal);
+
+    return () => {
+      controller.abort();
+      activeRequestController.current = null;
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {

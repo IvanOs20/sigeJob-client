@@ -70,6 +70,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    setAccessToken(null);
+    setUser(null);
+
     try {
       await api.post('/auth/logout', undefined, {
         withCredentials: true,

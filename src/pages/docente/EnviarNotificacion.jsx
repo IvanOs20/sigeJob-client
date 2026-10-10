@@ -104,11 +104,9 @@ const EnviarNotificacion = () => {
       mensaje: mensaje.trim(),
     }
 
-    console.log('>> [DEBUG] Enviando payload:', payload)
     setSubmitting(true)
     try {
       const response = await client.post('/notificaciones', payload)
-      console.log('>> [DEBUG] Respuesta exitosa:', response.data)
       setSuccessMessage('Notificación enviada correctamente')
       setMensaje('')
       setSelectedAlumno(null)
@@ -116,7 +114,6 @@ const EnviarNotificacion = () => {
       navigate('/docente/notificaciones')
       setTimeout(() => setSuccessMessage(''), 3000)
     } catch (err) {
-      console.log('>> [DEBUG] Validación del servidor:', err.response?.data)
       console.error('Error enviando notificación:', err)
       const status = err.response?.status
       const serverMessage = err.response?.data?.message

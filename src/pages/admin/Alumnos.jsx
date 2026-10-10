@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, GraduationCap, Edit3, Trash2, ChevronDown, Check, X, Loader2 } from 'lucide-react';
 import api from '../../api/axios.js';
 import EditarAlumnoDrawer from '../../components/admin/EditarAlumnoDrawer';
+import { useAuth } from '../../context/AuthContext';
 
 const getGrupoId = (grupo) => grupo?.id_grupo || grupo?.id;
 const getTutorId = (tutor) => tutor?.id_tutor || tutor?.id;
@@ -63,21 +64,27 @@ const Alumnos = () => {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [alumnoEditando, setAlumnoEditando] = useState(null);
+  const { user } = useAuth();
+  const isAuthenticated = Boolean(user);
+  const activeRequestController = useRef(null);
 
-  const fetchData = async () => {
+  const fetchData = async (signal) => {
+    if (!isAuthenticated) return;
+    const requestSignal = signal || activeRequestController.current?.signal;
     setLoading(true);
 
     try {
       const [alumnosResponse, gruposResponse, tutoresResponse] = await Promise.all([
-        api.get('/alumnos'),
-        api.get('/grupos'),
-        api.get('/tutores'),
+        api.get('/alumnos', { signal: requestSignal }),
+        api.get('/grupos', { signal: requestSignal }),
+        api.get('/tutores', { signal: requestSignal }),
       ]);
 
       setListaAlumnos(alumnosResponse.data || []);
       setListaGrupos(gruposResponse.data || []);
       setListaTutores(tutoresResponse.data || []);
     } catch (error) {
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
       console.error('Error al cargar alumnos, grupos y tutores:', error);
       setListaAlumnos([]);
       setListaGrupos([]);
@@ -88,8 +95,15 @@ const Alumnos = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const controller = new AbortController();
+    activeRequestController.current = controller;
+    fetchData(controller.signal);
+
+    return () => {
+      controller.abort();
+      activeRequestController.current = null;
+    };
+  }, [isAuthenticated]);
 
   const gruposFiltrados = useMemo(() => {
     const query = grupoQuery.trim().toLowerCase();
